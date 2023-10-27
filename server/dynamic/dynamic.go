@@ -15,7 +15,7 @@ func numCPU(w http.ResponseWriter, r *http.Request) {
 }
 
 func now(w http.ResponseWriter, r *http.Request) {
-	s := time.Now().Format("02/01/2006 15:04:05")
+	s := time.Now().Format("02/01/2006 15:04:05 MST")
 	fmt.Fprintln(w, "<title>Local Time</title>")
 	fmt.Fprintln(w, "<meta http-equiv=\"refresh\" content=\"1\">")
 	fmt.Fprintf(w, "<h1>Local time: %s</h1>\n", s)
