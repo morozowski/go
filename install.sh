@@ -14,8 +14,4 @@ asdf global golang latest
 go version
 
 echo "######### Compilando #########"
-cd go/server/dynamic
-go build dynamic.go
-
-echo "######### Rodando #########"
-sudo ./dynamic 80
+go build go/server/dynamic/dynamic.go
