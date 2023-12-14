@@ -47,10 +47,7 @@ func visit(source string, d fs.DirEntry, err error) error {
 			err := os.Mkdir(target, sourceInfo.Mode())
 			check(err)
 
-			var noChange time.Time
-			err = os.Chtimes(target, noChange, sourceInfo.ModTime())
-			check(err)
-
+			updateModTime(target, sourceInfo.ModTime())
 			printFilesDiffAfterwards(rel, sourceInfo, target)
 		} else {
 			check(err)
@@ -87,6 +84,12 @@ func visit(source string, d fs.DirEntry, err error) error {
 	return nil
 }
 
+func updateModTime(filePath string, modTime time.Time) {
+	var noChange time.Time
+	err := os.Chtimes(filePath, noChange, modTime)
+	check(err)
+}
+
 func printFilesDiffAfterwards(fileName string, sourceInfo fs.FileInfo, target string) fs.FileInfo {
 	newTargetInfo, err := os.Stat(target)
 	check(err)
@@ -115,10 +118,9 @@ func copyFile(source string, target string, sourceInfo fs.FileInfo) {
 	defer targetFile.Close()
 
 	bytes, err := io.Copy(targetFile, sourceFile)
-
-	var noChange time.Time
-	err = os.Chtimes(target, noChange, sourceInfo.ModTime())
 	check(err)
+
+	updateModTime(target, sourceInfo.ModTime())
 
 	elapsed := float64(time.Since(start)) / 1000000.0
 	log.Printf("=> %d bytes copied in %.1f ms at %.1f KB/s\n", bytes, elapsed, float64(bytes)/elapsed)
