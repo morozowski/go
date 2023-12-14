@@ -46,6 +46,11 @@ func visit(source string, d fs.DirEntry, err error) error {
 			log.Printf("Creating directory %s\n", rel)
 			err := os.Mkdir(target, sourceInfo.Mode())
 			check(err)
+
+			var noChange time.Time
+			err = os.Chtimes(target, noChange, sourceInfo.ModTime())
+			check(err)
+
 			printFilesDiffAfterwards(rel, sourceInfo, target)
 		} else {
 			check(err)
@@ -53,8 +58,6 @@ func visit(source string, d fs.DirEntry, err error) error {
 				log.Fatal(target + " should be a directory!")
 			}
 		}
-	} else if !d.Type().IsRegular() {
-		log.Printf("WARNING: %s will not be copied (since it is not a regular file)", rel)
 	} else {
 		targetInfo, err := os.Stat(target)
 		if errors.Is(err, os.ErrNotExist) {
