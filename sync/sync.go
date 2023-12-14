@@ -54,6 +54,14 @@ func visit(source string, d fs.DirEntry, err error) error {
 			check(err)
 			if !targetInfo.IsDir() {
 				log.Fatal(target + " should be a directory!")
+			} else { // target directory is newer: sync the modification date
+				deltaTime := sourceInfo.ModTime().Sub(targetInfo.ModTime())
+				if deltaTime > 100 || deltaTime <= -1000000000 {
+					printFilesDiff("BEFORE", rel, sourceInfo, targetInfo)
+					log.Printf("Updating modification time of directory %s\n", rel)
+					updateModTime(target, sourceInfo.ModTime())
+					printFilesDiffAfterwards(rel, sourceInfo, target)
+				}
 			}
 		}
 	} else {
@@ -70,14 +78,16 @@ func visit(source string, d fs.DirEntry, err error) error {
 
 			deltaTime := sourceInfo.ModTime().Sub(targetInfo.ModTime())
 			deltaSize := sourceInfo.Size() - targetInfo.Size()
-			if deltaTime != 0 || deltaSize != 0 {
+			if (deltaTime > 100 || deltaTime <= -1000000000) || deltaSize != 0 {
 				printFilesDiff("BEFORE", rel, sourceInfo, targetInfo)
 				if deltaTime > 100 || deltaSize != 0 {
 					log.Printf("Updating file %s\n", rel)
 					syncFile(source, target, sourceInfo)
 					printFilesDiffAfterwards(rel, sourceInfo, target)
-				} else if deltaTime < 0 {
-					log.Printf("WARNING: %s will not be updated because the target file is newer", rel)
+				} else { // same size, target file is newer: sync the modification date
+					log.Printf("Updating modification time of file %s\n", rel)
+					updateModTime(target, sourceInfo.ModTime())
+					printFilesDiffAfterwards(rel, sourceInfo, target)
 				}
 			}
 		}
