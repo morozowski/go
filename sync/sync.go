@@ -59,7 +59,7 @@ func visit(source string, d fs.DirEntry, err error) error {
 		targetInfo, err := os.Stat(target)
 		if errors.Is(err, os.ErrNotExist) {
 			log.Printf("Copying file %s\n", rel)
-			copyFile(source, target, sourceInfo)
+			syncFile(source, target, sourceInfo)
 			printFilesDiffAfterwards(rel, sourceInfo, target)
 		} else {
 			check(err)
@@ -73,7 +73,7 @@ func visit(source string, d fs.DirEntry, err error) error {
 				printFilesDiff("BEFORE", rel, sourceInfo, targetInfo)
 				if deltaTime > 100 || deltaSize != 0 {
 					log.Printf("Updating file %s\n", rel)
-					copyFile(source, target, sourceInfo)
+					syncFile(source, target, sourceInfo)
 					printFilesDiffAfterwards(rel, sourceInfo, target)
 				} else if deltaTime < 0 {
 					log.Printf("WARNING: %s will not be updated because the target file is newer", rel)
@@ -106,9 +106,17 @@ func printFilesDiff(message, fileName string, sourceInfo, targetInfo fs.FileInfo
 		sourceInfo.ModTime().Sub(targetInfo.ModTime()))
 }
 
-func copyFile(source string, target string, sourceInfo fs.FileInfo) {
+func syncFile(source string, target string, sourceInfo fs.FileInfo) {
 	start := time.Now()
 
+	bytes := copyFile(source, target, sourceInfo)
+	updateModTime(target, sourceInfo.ModTime())
+
+	elapsed := float64(time.Since(start)) / 1000000.0
+	log.Printf("=> %d bytes copied in %.1f ms at %.1f KB/s\n", bytes, elapsed, float64(bytes)/elapsed)
+}
+
+func copyFile(source, target string, sourceInfo fs.FileInfo) int64 {
 	sourceFile, err := os.Open(source)
 	check(err)
 	defer sourceFile.Close()
@@ -119,11 +127,7 @@ func copyFile(source string, target string, sourceInfo fs.FileInfo) {
 
 	bytes, err := io.Copy(targetFile, sourceFile)
 	check(err)
-
-	updateModTime(target, sourceInfo.ModTime())
-
-	elapsed := float64(time.Since(start)) / 1000000.0
-	log.Printf("=> %d bytes copied in %.1f ms at %.1f KB/s\n", bytes, elapsed, float64(bytes)/elapsed)
+	return bytes
 }
 
 func check(e error) {
