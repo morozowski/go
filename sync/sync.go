@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -21,8 +22,8 @@ func main() {
 		return
 	}
 
-	sourceDir = args[0]
-	targetDir = args[1]
+	sourceDir = strings.ReplaceAll(args[0], "\\", "/")
+	targetDir = strings.ReplaceAll(args[1], "\\", "/")
 
 	log.Println("Walking directory " + sourceDir + "...")
 	err := filepath.WalkDir(sourceDir, visit)
